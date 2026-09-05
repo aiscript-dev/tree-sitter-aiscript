@@ -7,24 +7,28 @@
   "license": "MIT",
   "exports": {
     ".": {
-      "default": "./bindings/node/index.js",
-      "types": "./bindings/node/index.d.ts"
-    },
-    "./web": {
       "default": "./dist/index.js",
       "types": "./dist/index.d.ts"
+    },
+    "./views": {
+      "default": "./dist/generated/views.js",
+      "types": "./dist/generated/views.d.ts"
+    },
+    "./queries/*": {
+      "default": "./queries/*"
     },
     "./tree-sitter-aiscript.wasm": {
       "default": "./tree-sitter-aiscript.wasm"
     }
   },
   "scripts": {
-    "install": "node-gyp-build",
+    "prepare": "pnpm run build",
     "prestart": "tree-sitter build --wasm",
     "start": "tree-sitter playground",
-    "test": "node --test bindings/node/*_test.js",
     "dev": "pnpm nodemon -w . -e js -x 'tree-sitter generate; pnpm run start -q'",
-    "build:lib": "tsc -p ./tsconfig.build.jsonc"
+    "build:lib": "node scripts/generate-types.ts && tsc -p ./tsconfig.build.jsonc",
+    "build:wasm": "tree-sitter build --wasm",
+    "build": "pnpm run \"/^build:/\""
   },
   "keywords": [
     "incremental",
@@ -35,18 +39,12 @@
   "files": [
     "grammar.js",
     "tree-sitter.json",
-    "binding.gyp",
     "prebuilds/**",
-    "bindings/node/*",
     "queries/*",
     "src/**",
-    "*.wasm"
+    "*.wasm",
+    "dist/**"
   ],
-  "dependencies": {
-    "node-addon-api": "^8.5.0",
-    "node-gyp-build": "^4.8.4",
-    "web-tree-sitter": "^0.26.13"
-  },
   "devDependencies": {
     "@types/node": "^26.4.0",
     "nodemon": "^3.1.14",
@@ -55,7 +53,8 @@
     "tree-sitter-cli": "^0.26.13"
   },
   "peerDependencies": {
-    "tree-sitter": "^0.25.0"
+    "tree-sitter": "^0.25.0",
+    "web-tree-sitter": "^0.26.13"
   },
   "peerDependenciesMeta": {
     "tree-sitter": {
