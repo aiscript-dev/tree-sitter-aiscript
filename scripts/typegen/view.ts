@@ -23,7 +23,7 @@ export function* generateAllViews(state: CodeGeneratorState, nodeTypes: LoadedNo
 }
 
 function* emitImports(state: CodeGeneratorState, { treeSitterWebModuleName }: ViewGeneratorOptions): Generator<string, CodeGeneratorState> {
-  state = yield* emitText(state, "import { Node } from ", JSON.stringify(treeSitterWebModuleName), ";")
+  state = yield* emitText(state, "import type { Node } from ", JSON.stringify(treeSitterWebModuleName), ";")
 
   return state;
 }
