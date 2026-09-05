@@ -10,6 +10,10 @@
       "default": "./dist/index.js",
       "types": "./dist/index.d.ts"
     },
+    "./views": {
+      "default": "./dist/generated/views.js",
+      "types": "./dist/generated/views.d.ts"
+    },
     "./queries/*": {
       "default": "./queries/*"
     },
