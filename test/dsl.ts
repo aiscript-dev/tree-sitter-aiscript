@@ -1,5 +1,5 @@
 import { Language, Parser, type Node } from "web-tree-sitter";
-import type { InvalidNode, NodeView, NodeView_array_literal, NodeView_comment, NodeView_expr, NodeView_global_block_child, NodeView_numeric_literal, NodeView_object_literal, NodeView_object_literal_field, NodeView_reference, NodeView_stmt, NodeView_string_literal, UnnamedTypeViews } from "../dist/generated/views.js";
+import type { InvalidNode, NodeView, NodeView_array_literal, NodeView_comment, NodeView_destructuring, NodeView_expr, NodeView_global_block_child, NodeView_numeric_literal, NodeView_object_literal, NodeView_object_literal_field, NodeView_reference, NodeView_stmt, NodeView_stmt_let, NodeView_stmt_var, NodeView_string_literal, NodeView_type_annotation, UnnamedTypeViews } from "../dist/generated/views.js";
 import { expect } from "vitest";
 import { fileURLToPath } from "node:url";
 
@@ -14,7 +14,7 @@ export type NodeChecker<N> = (node: Node, path?: Path) => N;
 export type MoreChecker<N extends Node, Fields extends Record<string, Node | null>> =
   | {
     extract: (node: N) => Fields;
-    checker: { [K in keyof Fields]: NodeChecker<Exclude<Fields[K], null>["type"]> }
+    checker: { [K in keyof Fields]: null | NodeChecker<Exclude<Fields[K], null>["type"]> }
   }
   | {
     expect: (node: N) => void;
@@ -32,7 +32,11 @@ export type ChildrenChecker<N extends Node> =
   }
   ;
 
-export const isNodeType = <Type extends NodeView["type"]>(type: Type, node: Node): node is Extract<NodeView, { type: Type }> => node.type == type;
+export type NodeViewOf<Type extends NodeView["type"]> = Extract<NodeView, Type extends unknown ? { type: Type } : never>;
+
+export type NodeChildOf<Type extends NodeView["type"]> = Exclude<NodeViewOf<Type>["children"][number], InvalidNode>;
+
+export const isNodeType = <Type extends NodeView["type"]>(type: Type, node: Node): node is NodeViewOf<Type> => node.type == type;
 
 const hasProperty = <T extends {}, N extends string | symbol | number>(o: T, name: N): name is typeof name & keyof T => name in o;
 
@@ -41,8 +45,8 @@ export function _(node: Node) { return node.type; }
 
 export function mustBeNode<Type extends NodeView["type"], const Fields extends Record<string, Node | null> | null>(
   type: Type,
-  more: Fields extends {} ? MoreChecker<Extract<NodeView, { type: Type }>, Fields> : null,
-  children?: ChildrenChecker<Extract<NodeView, { type: Type }>>
+  more: Fields extends {} ? MoreChecker<NodeViewOf<Type>, Fields> : null,
+  children?: ChildrenChecker<NodeChildOf<Type>>
 ): NodeChecker<Type> {
   return (node, path = [[node.type, "root"]]) => {
     expect(node.type, `is node.type == ${JSON.stringify(type)}\n  ${toStringPath(path)}\n  ${node.toString()}\n\n`).toBe(type);
@@ -127,7 +131,7 @@ export function mustBeIdent(name: string) {
     expect: node => {
       expect(node.text).toBe(name)
     }
-  })
+  });
 }
 
 export function mustBeComment(comment: string) {
@@ -135,7 +139,7 @@ export function mustBeComment(comment: string) {
     expect: node => {
       expect(node.text).toBe(comment)
     }
-  })
+  });
 }
 
 function mustBeSingleChildContainer<N extends NodeView["type"]>(name: N) {
@@ -150,6 +154,7 @@ export const mustBeStmt = mustBeSingleChildContainer("stmt");
 export const mustBeBlockChild = mustBeSingleChildContainer("block_child");
 export const mustBeGlobalBlockChild = mustBeSingleChildContainer("global_block_child");
 export const mustBeLiteral = mustBeSingleChildContainer("literal");
+export const mustBeDestructuring = mustBeSingleChildContainer("destructuring");
 
 export function mustBeStringLiteral<T extends Exclude<NodeView_string_literal["children"][number], InvalidNode | NodeView_comment>["type"]>(type: `${T}`, raw: string) {
   return mustBeNode("string_literal", null, [
@@ -171,14 +176,14 @@ export function mustBeObjectLiteral<T extends Exclude<NodeView_object_literal["c
   return mustBeNode("object_literal", null, {
     filter: x => x.isNamed,
     children
-  })
+  });
 }
 
 export function mustBeArrayLiteral<T extends Exclude<NodeView_array_literal["children"][number], InvalidNode | NodeView_comment>["type"]>(children: NodeChecker<T>[]) {
   return mustBeNode("array_literal", null, {
     filter: x => x.isNamed,
     children
-  })
+  });
 }
 
 function extractObjectField(node: NodeView_object_literal_field) {
@@ -253,4 +258,29 @@ export function mustBeBinaryOperator<Op extends UnnamedTypeViews[keyof UnnamedTy
  */
 export function raw(tmpl: TemplateStringsArray): string {
   return tmpl.raw.join("").split(/\n[ \t]*\|?/).join("\n");
+}
+
+export function mustBeVariableStmt<N extends (NodeView_stmt_let | NodeView_stmt_var)["type"]>(type: N, name: NodeChecker<NodeView_destructuring["type"]>, decl: NodeChecker<NodeView_type_annotation["type"]> | null, initial: NodeChecker<NodeView_expr["type"]>) {
+  return mustBeNode(type, {
+    extract: node => {
+      const res = {
+        name: node.childForFieldName("name"),
+        type: node.childForFieldName("type"),
+        initial: node.childForFieldName("initial"),
+      } as const;
+
+      if (decl == null) {
+        expect(res.type).toBeNullable();
+      } else {
+        expect(res.type).not.toBeNullable();
+      }
+
+      return res;
+    },
+    checker: {
+      name,
+      type: decl,
+      initial
+    }
+  })
 }

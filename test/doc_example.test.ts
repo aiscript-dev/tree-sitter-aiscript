@@ -4,6 +4,7 @@ import {
   grammarTestOf,
   mustBeArrayLiteral,
   mustBeComment,
+  mustBeDestructuring,
   mustBeExpr,
   mustBeGlobalBlockChild,
   mustBeIdent,
@@ -13,6 +14,7 @@ import {
   mustBeReference,
   mustBeStmt,
   mustBeStringLiteral,
+  mustBeVariableStmt,
   raw
 } from "./dsl.ts";
 
@@ -258,4 +260,121 @@ test(`example: array print "ai", "kawaii"`, grammarTestOf(
       mustBeComment(`// "kawaii"`),
     ])
   ])
+));
+
+test(`example: eval expression`, grammarTestOf(
+  raw`
+  |let foo = eval {
+  |  let a = 1
+  |  let b = 2
+  |  (a + b)
+  |}
+  |
+  |<: foo // 3
+  `,
+  () => { throw "TODO"; }
+));
+
+test(`example: if expression`, grammarTestOf(
+  raw`
+  |if (a == b) {
+  |  <: "a equals to b"
+  |} elif (a > b) {
+  |  <: "a is greater than b"
+  |} else {
+  |  <: "a is less than b"
+  |}
+  `,
+  () => { throw "TODO"; }
+));
+
+test(`example: template expression`, grammarTestOf(
+  [
+    `let ai = "kawaii"`,
+    `<: \`Hello, {ai} world!\``,
+  ].join("\n"),
+  mustBeNode("source_file", null, [
+    mustBeNode("global", null, [
+      mustBeGlobalBlockChild(
+        mustBeStmt(
+          mustBeVariableStmt(
+            "stmt_let",
+            mustBeDestructuring(mustBeIdent("ai")),
+            null,
+            mustBeExpr(
+              mustBeLiteral(
+                mustBeStringLiteral("double_quote_string_literal", `"kawaii"`)
+              )
+            )
+          )
+        )
+      ),
+      mustBeGlobalBlockChild(
+        mustBeStmt(
+          mustBeNode("stmt_print", {
+            extract: node => {
+              return {
+                expr: node.childForFieldName("expr"),
+              };
+            },
+            checker: {
+              expr:
+                mustBeExpr(
+                  mustBeLiteral(
+                    mustBeNode("string_literal", null, [
+                      mustBeNode("back_quote_string_literal", null, [
+                        mustBeNode("symbol_back_quote", null),
+                        mustBeNode("back_quote_string_content", null, [
+                          mustBeNode("back_quote_string_text", {
+                            expect: node => {
+                              expect(node.text).toBe("Hello, ");
+                            }
+                          })
+                        ]),
+                        mustBeNode("back_quote_string_content", null, [
+                          mustBeNode("back_quote_string_expansion", {
+                            extract: node => {
+                              return {
+                                expr: node.childForFieldName("expr")
+                              }
+                            },
+                            checker: {
+                              expr:
+                                mustBeExpr(
+                                  mustBeReference(
+                                    mustBeIdent("ai")
+                                  )
+                                )
+                            }
+                          }),
+                        ]),
+                        mustBeNode("back_quote_string_content", null, [
+                          mustBeNode("back_quote_string_text", {
+                            expect: node => {
+                              expect(node.text).toBe(" world!");
+                            }
+                          })
+                        ]),
+                        mustBeNode("symbol_back_quote", null),
+                      ])
+                    ])
+                  )
+                )
+            }
+          })
+        )
+      )
+    ])
+  ])
+));
+
+test(`example: metadata expression`, grammarTestOf(
+  raw`
+  |### {
+  |  name: "example"
+  |  version: 42
+  |  keywords: ["foo", "bar", "baz"]
+  |}
+  `,
+  () => { throw "TODO"; }
 ));
