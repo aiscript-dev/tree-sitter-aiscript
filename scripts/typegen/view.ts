@@ -15,6 +15,9 @@ export function* generateAllViews(state: CodeGeneratorState, nodeTypes: LoadedNo
   state = yield* emitNodeTypeUnion(state, nodeTypes);
   state = yield* emitText(state, "\n\n");
 
+  state = yield* emitExtraNodeTypeUnion(state, nodeTypes);
+  state = yield* emitText(state, "\n\n");
+
   state = yield* emitAllUnamedTypes(state, nodeTypes);
   state = yield* emitText(state, "\n\n");
 
@@ -24,6 +27,23 @@ export function* generateAllViews(state: CodeGeneratorState, nodeTypes: LoadedNo
 
 function* emitImports(state: CodeGeneratorState, { treeSitterWebModuleName }: ViewGeneratorOptions): Generator<string, CodeGeneratorState> {
   state = yield* emitText(state, "import type { Node } from ", JSON.stringify(treeSitterWebModuleName), ";")
+
+  return state;
+}
+
+function* emitExtraNodeTypeUnion(state: CodeGeneratorState, { extraTypes, types }: LoadedNodeTypes): Generator<string, CodeGeneratorState> {
+  state = yield* emitText(state, `type ExtraNode =`);
+  state = addIndentLevel(state, 1);
+
+  for (const name of extraTypes) {
+    const ty = types.get(name)!;
+
+    state = yield* emitText(state, "\n| ");
+    state = yield* emitNodeTypeReference(state, ty);
+  }
+
+  state = addIndentLevel(state, -1);
+  state = yield* emitText(state, `\n;`);
 
   return state;
 }
@@ -108,6 +128,7 @@ function* emitNodeTypeUnion(state: CodeGeneratorState, { namedTypes, unnamedType
 
   if (unnamedTypes.length > 0) {
     state = yield* emitText(state, "\n| UnnamedTypeViews[keyof UnnamedTypeViews]");
+    state = yield* emitText(state, "\n| ExtraNode");
   }
 
   for (const name of namedTypes) {
@@ -206,6 +227,7 @@ function* emitNodeTypeChildren(state: CodeGeneratorState, field: NodeField): Gen
   state = addIndentLevel(state, 1);
 
   state = yield* emitText(state, "\n| InvalidNode");
+  state = yield* emitText(state, "\n| ExtraNode");
 
   for (let i = 0; i < field.types.length; i++) {
     const childType = field.types[i]!;

@@ -3,6 +3,7 @@ import nodeTypesJSON from "../src/node-types.json" with { type: "json" };
 export interface TreeSitterBasicNodeType {
   type: string;
   named: boolean;
+  extra?: boolean;
 }
 
 export interface TreeSitterContainerNodeType {
