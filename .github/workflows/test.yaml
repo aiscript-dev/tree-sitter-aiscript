@@ -1,0 +1,28 @@
+# $schema: https://json.schemastore.org/github-workflow.json
+
+name: Run test
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - develop
+
+env:
+  pnpm-runtime: node@24
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: initialize pnpm
+        uses: pnpm/setup@v2
+        with:
+          runtime: ${{ env.pnpm-runtime }}
+          install: true
+          require-lockfile: true
+          cache: true
+      - name: run test
+        run: |-
+          pnpm run build
+          pnpm run test
