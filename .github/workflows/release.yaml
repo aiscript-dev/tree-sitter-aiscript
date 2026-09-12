@@ -15,24 +15,21 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - name: make artifact name
-        id: artifact_name
+      - name: initialize pnpm
+        uses: pnpm/setup@v2
+        with:
+          runtime: node@24
+          install: true
+          require-lockfile: true
+          cache: true
+      - name: build tarball
         run: |-
-          jq -r '"tree-sitter-aiscript-" + .version | "name=" + .' ./package.json >> "$GITHUB_OUTPUT"
-      - name: call build
-        uses: ./.github/workflows/build.yaml@develop
-        with:
-          do_upload: true
-          artifact_name: ${{ steps.artifact_name.outputs.name }}
-          ref: ${{ github.ref }}
-      - name: get result
-        uses: actions/download-artifact@v7
-        with:
-          name: ${{ steps.artifact_name.outputs.name }}
-          path: ./out/
+          dest="$(mktemp -d)"
+          mkdir -p out/ && pnpm pack --pack-destination out/
       - name: add artifact to release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           target: ${{ github.ref_name }}
         run: |-
           gh release upload "$target" ./out/*.tgz
+  
