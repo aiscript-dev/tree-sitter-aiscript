@@ -1,5 +1,20 @@
 import { Language, Parser, type Node } from "web-tree-sitter";
-import type { InvalidNode, NodeView, NodeView_array_literal, NodeView_comment, NodeView_destructuring, NodeView_expr, NodeView_numeric_literal, NodeView_object_literal, NodeView_object_literal_field,  NodeView_stmt_let, NodeView_stmt_var, NodeView_string_literal, NodeView_type_annotation, UnnamedTypeViews } from "../dist/generated/views.js";
+import type {
+  InvalidNode,
+  NodeView,
+  NodeView_array_literal,
+  NodeView_comment,
+  NodeView_destructuring,
+  NodeView_expr,
+  NodeView_numeric_literal,
+  NodeView_object_literal,
+  NodeView_object_literal_field,
+  NodeView_stmt_let,
+  NodeView_stmt_var,
+  NodeView_string_literal,
+  NodeView_type_annotation,
+  UnnamedTypeViews
+} from "../dist/generated/views.js";
 import { expect } from "vitest";
 import { fileURLToPath } from "node:url";
 
