@@ -20,7 +20,7 @@ jobs:
         run: |-
           jq -r '"tree-sitter-aiscript-" + .version | "name=" + .' ./package.json >> "$GITHUB_OUTPUT"
       - name: call build
-        uses: ./.github/workflows/build.yaml
+        uses: ./.github/workflows/build.yaml@develop
         with:
           do_upload: true
           artifact_name: ${{ steps.artifact_name.outputs.name }}
