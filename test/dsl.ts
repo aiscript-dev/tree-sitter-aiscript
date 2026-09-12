@@ -1,5 +1,5 @@
 import { Language, Parser, type Node } from "web-tree-sitter";
-import type { InvalidNode, NodeView, NodeView_array_literal, NodeView_comment, NodeView_destructuring, NodeView_expr, NodeView_global_block_child, NodeView_numeric_literal, NodeView_object_literal, NodeView_object_literal_field, NodeView_reference, NodeView_stmt, NodeView_stmt_let, NodeView_stmt_var, NodeView_string_literal, NodeView_type_annotation, UnnamedTypeViews } from "../dist/generated/views.js";
+import type { InvalidNode, NodeView, NodeView_array_literal, NodeView_comment, NodeView_destructuring, NodeView_expr, NodeView_numeric_literal, NodeView_object_literal, NodeView_object_literal_field,  NodeView_stmt_let, NodeView_stmt_var, NodeView_string_literal, NodeView_type_annotation, UnnamedTypeViews } from "../dist/generated/views.js";
 import { expect } from "vitest";
 import { fileURLToPath } from "node:url";
 
@@ -155,6 +155,13 @@ export const mustBeBlockChild = mustBeSingleChildContainer("block_child");
 export const mustBeGlobalBlockChild = mustBeSingleChildContainer("global_block_child");
 export const mustBeLiteral = mustBeSingleChildContainer("literal");
 export const mustBeDestructuring = mustBeSingleChildContainer("destructuring");
+
+export function mustBeParentheses(expr: NodeChecker<"expr">) {
+  return mustBeNode("parentheses", null, {
+    filter: x => x.isNamed,
+    children: [expr]
+  });
+}
 
 export function mustBeStringLiteral<T extends Exclude<NodeView_string_literal["children"][number], InvalidNode | NodeView_comment>["type"]>(type: `${T}`, raw: string) {
   return mustBeNode("string_literal", null, [
@@ -322,3 +329,28 @@ export function mustBeMatchChildDefault(body: NodeChecker<"expr">) {
     }
   });
 }
+
+export function mustBeEval(body: NodeChecker<"block">) {
+  return mustBeNode("expr_eval", {
+    extract: node => {
+      const res = {
+        body: node.childForFieldName("body"),
+      } as const;
+
+      expect(res.body).not.toBeNullable();
+
+      return res;
+    },
+    checker: {
+      body
+    }
+  });
+}
+
+export function mustBeBlock(children: NodeChecker<"block_child">[]) {
+  return mustBeNode("block", null, {
+    filter: x => x.isNamed,
+    children
+  });
+}
+

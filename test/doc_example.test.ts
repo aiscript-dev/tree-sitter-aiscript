@@ -3,14 +3,20 @@ import { Parser } from "web-tree-sitter";
 import {
   grammarTestOf,
   mustBeArrayLiteral,
+  mustBeBinaryOperator,
+  mustBeBlock,
+  mustBeBlockChild,
   mustBeComment,
   mustBeDestructuring,
+  mustBeEval,
   mustBeExpr,
   mustBeGlobalBlockChild,
   mustBeIdent,
   mustBeLiteral,
   mustBeNode,
   mustBeNumericLiteral,
+  mustBeObjectLiteralField,
+  mustBeParentheses,
   mustBeReference,
   mustBeStmt,
   mustBeStringLiteral,
@@ -272,7 +278,90 @@ test(`example: eval expression`, grammarTestOf(
   |
   |<: foo // 3
   `,
-  () => { throw "TODO"; }
+  mustBeNode("source_file", null, [
+    mustBeNode("global", null, [
+      mustBeGlobalBlockChild(
+        mustBeStmt(
+          mustBeVariableStmt(
+            "stmt_let",
+            mustBeDestructuring(mustBeIdent("foo")),
+            null,
+            mustBeExpr(
+              mustBeEval(
+                mustBeBlock([
+                  mustBeBlockChild(
+                    mustBeStmt(
+                      mustBeVariableStmt(
+                        "stmt_let",
+                        mustBeDestructuring(mustBeIdent("a")),
+                        null,
+                        mustBeExpr(
+                          mustBeLiteral(
+                            mustBeNumericLiteral("decimal", "1")
+                          )
+                        )
+                      )
+                    )
+                  ),
+                  mustBeBlockChild(
+                    mustBeStmt(
+                      mustBeVariableStmt(
+                        "stmt_let",
+                        mustBeDestructuring(mustBeIdent("b")),
+                        null,
+                        mustBeExpr(
+                          mustBeLiteral(
+                            mustBeNumericLiteral("decimal", "2")
+                          )
+                        )
+                      )
+                    )
+                  ),
+                  mustBeBlockChild(
+                    mustBeExpr(
+                      mustBeParentheses(
+                        mustBeExpr(
+                          mustBeBinaryOperator(
+                            "+",
+                            mustBeExpr(mustBeReference(mustBeIdent("a"))),
+                            mustBeExpr(mustBeReference(mustBeIdent("b")))
+                          )
+                        )
+                      )
+                    )
+                  )
+                ])
+              )
+            )
+          )
+        )
+      ),
+      mustBeGlobalBlockChild(
+        mustBeStmt(
+          mustBeNode("stmt_print", {
+            extract: node => {
+              const res = {
+                expr: node.childForFieldName("expr"),
+              } as const;
+
+              expect(res.expr).not.toBeNullable();
+
+              return res;
+            },
+            checker: {
+              expr:
+                mustBeExpr(
+                  mustBeReference(
+                    mustBeIdent("foo")
+                  )
+                )
+            }
+          })
+        )
+      ),
+      mustBeComment(`// 3`),
+    ])
+  ])
 ));
 
 test(`example: if expression`, grammarTestOf(
@@ -285,7 +374,163 @@ test(`example: if expression`, grammarTestOf(
   |  <: "a is less than b"
   |}
   `,
-  () => { throw "TODO"; }
+  mustBeNode("source_file", null, [
+    mustBeNode("global", null, [
+      mustBeGlobalBlockChild(
+        mustBeExpr(
+          mustBeNode("expr_if", {
+            extract: node => {
+              const res = {
+                condition: node.childForFieldName("condition"),
+                body: node.childForFieldName("body"),
+              } as const;
+
+              expect(res.condition).not.toBeNullable();
+              expect(res.body).not.toBeNullable();
+
+              return res;
+            },
+            checker: {
+              condition:
+                mustBeExpr(
+                  mustBeParentheses(
+                    mustBeExpr(
+                      mustBeBinaryOperator(
+                        "==",
+                        mustBeExpr(mustBeReference(mustBeIdent("a"))),
+                        mustBeExpr(mustBeReference(mustBeIdent("b")))
+                      )
+                    )
+                  )
+                ),
+              body:
+                mustBeBlock([
+                  mustBeBlockChild(
+                    mustBeStmt(
+                      mustBeNode("stmt_print", {
+                        extract: node => {
+                          const res = {
+                            expr: node.childForFieldName("expr"),
+                          } as const;
+
+                          expect(res.expr).not.toBeNullable();
+
+                          return res;
+                        },
+                        checker: {
+                          expr:
+                            mustBeExpr(
+                              mustBeLiteral(
+                                mustBeStringLiteral("double_quote_string_literal", `"a equals to b"`)
+                              )
+                            )
+                        }
+                      })
+                    )
+                  )
+                ])
+            }
+          }, {
+            filter: x => x.type === "expr_elif" || x.type === "expr_else",
+            children: [
+              mustBeNode("expr_elif", {
+                extract: node => {
+                  const res = {
+                    condition: node.childForFieldName("condition"),
+                    body: node.childForFieldName("body"),
+                  } as const;
+
+                  expect(res.condition).not.toBeNullable();
+                  expect(res.body).not.toBeNullable();
+
+                  return res;
+                },
+                checker: {
+                  condition:
+                    mustBeExpr(
+                      mustBeParentheses(
+                        mustBeExpr(
+                          mustBeBinaryOperator(
+                            ">",
+                            mustBeExpr(mustBeReference(mustBeIdent("a"))),
+                            mustBeExpr(mustBeReference(mustBeIdent("b")))
+                          )
+                        )
+                      )
+                    ),
+                  body:
+                    mustBeBlock([
+                      mustBeBlockChild(
+                        mustBeStmt(
+                          mustBeNode("stmt_print", {
+                            extract: node => {
+                              const res = {
+                                expr: node.childForFieldName("expr"),
+                              } as const;
+
+                              expect(res.expr).not.toBeNullable();
+
+                              return res;
+                            },
+                            checker: {
+                              expr:
+                                mustBeExpr(
+                                  mustBeLiteral(
+                                    mustBeStringLiteral("double_quote_string_literal", `"a is greater than b"`)
+                                  )
+                                )
+                            }
+                          })
+                        )
+                      )
+                    ])
+                }
+              }),
+              mustBeNode("expr_else", {
+                extract: node => {
+                  const res = {
+                    body: node.childForFieldName("body"),
+                  } as const;
+
+                  expect(res.body).not.toBeNullable();
+
+                  return res;
+                },
+                checker: {
+                  body:
+                    mustBeBlock([
+                      mustBeBlockChild(
+                        mustBeStmt(
+                          mustBeNode("stmt_print", {
+                            extract: node => {
+                              const res = {
+                                expr: node.childForFieldName("expr"),
+                              } as const;
+
+                              expect(res.expr).not.toBeNullable();
+
+                              return res;
+                            },
+                            checker: {
+                              expr:
+                                mustBeExpr(
+                                  mustBeLiteral(
+                                    mustBeStringLiteral("double_quote_string_literal", `"a is less than b"`)
+                                  )
+                                )
+                            }
+                          })
+                        )
+                      )
+                    ])
+                }
+              }),
+            ]
+          })
+        )
+      )
+    ])
+  ])
 ));
 
 test(`example: template expression`, grammarTestOf(
@@ -376,5 +621,71 @@ test(`example: metadata expression`, grammarTestOf(
   |  keywords: ["foo", "bar", "baz"]
   |}
   `,
-  () => { throw "TODO"; }
+  mustBeNode("source_file", null, [
+    mustBeNode("global", null, [
+      mustBeGlobalBlockChild(
+        mustBeNode("metadata", {
+          extract: node => {
+            const res = {
+              data: node.childForFieldName("data"),
+            } as const;
+
+            expect(res.data).not.toBeNullable();
+
+            return res;
+          },
+          checker: {
+            data:
+              mustBeLiteral(
+                mustBeNode("object_literal", null, {
+                  filter: x => x.isNamed,
+                  children: [
+                    mustBeObjectLiteralField(
+                      mustBeIdent("name"),
+                      mustBeExpr(
+                        mustBeLiteral(
+                          mustBeStringLiteral("double_quote_string_literal", `"example"`)
+                        )
+                      )
+                    ),
+                    mustBeObjectLiteralField(
+                      mustBeIdent("version"),
+                      mustBeExpr(
+                        mustBeLiteral(
+                          mustBeNumericLiteral("decimal", "42")
+                        )
+                      )
+                    ),
+                    mustBeObjectLiteralField(
+                      mustBeIdent("keywords"),
+                      mustBeExpr(
+                        mustBeLiteral(
+                          mustBeArrayLiteral([
+                            mustBeExpr(
+                              mustBeLiteral(
+                                mustBeStringLiteral("double_quote_string_literal", `"foo"`)
+                              )
+                            ),
+                            mustBeExpr(
+                              mustBeLiteral(
+                                mustBeStringLiteral("double_quote_string_literal", `"bar"`)
+                              )
+                            ),
+                            mustBeExpr(
+                              mustBeLiteral(
+                                mustBeStringLiteral("double_quote_string_literal", `"baz"`)
+                              )
+                            ),
+                          ])
+                        )
+                      )
+                    ),
+                  ]
+                })
+              )
+          }
+        })
+      )
+    ])
+  ])
 ));
