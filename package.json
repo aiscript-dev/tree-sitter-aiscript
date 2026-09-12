@@ -5,6 +5,7 @@
   "description": "AiScript grammar for tree-sitter",
   "type": "module",
   "license": "MIT",
+  "packageManager": "pnpm@11.25.0",
   "exports": {
     ".": {
       "default": "./dist/index.js",
@@ -25,6 +26,7 @@
     "prepare": "pnpm run build",
     "prestart": "tree-sitter build --wasm",
     "start": "tree-sitter playground",
+    "test": "vitest",
     "dev": "pnpm nodemon -w . -e js -x 'tree-sitter generate; pnpm run start -q'",
     "build:lib": "node scripts/generate-types.ts && tsc -p ./tsconfig.build.jsonc",
     "build:wasm": "tree-sitter build --wasm",
@@ -50,7 +52,9 @@
     "nodemon": "^3.1.14",
     "prebuildify": "^6.0.1",
     "tree-sitter": "^0.25.0",
-    "tree-sitter-cli": "^0.26.13"
+    "tree-sitter-cli": "^0.26.13",
+    "typescript": "^7.0.2",
+    "vitest": "^5.0.0"
   },
   "peerDependencies": {
     "tree-sitter": "^0.25.0",

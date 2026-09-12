@@ -4,6 +4,7 @@ import type { TreeSitterNodeType } from "../../lib/node-types.ts";
 export interface LoadedNodeTypes {
   namedTypes: string[];
   unnamedTypes: string[];
+  extraTypes: string[];
   types: Map<string, TreeSitterNodeType>;
 }
 
@@ -12,6 +13,7 @@ export function loadNodeTypes(): LoadedNodeTypes | Error[] {
   const types = new Map<string, TreeSitterNodeType>();
   const namedTypes: string[] = [];
   const unnamedTypes: string[] = [];
+  const extraTypes: string[] = [];
 
   for (const item of nodeTypes) {
     if (types.has(item.type)) {
@@ -24,6 +26,10 @@ export function loadNodeTypes(): LoadedNodeTypes | Error[] {
       } else {
         unnamedTypes.push(item.type);
       }
+
+      if ("extra" in item && item.extra) {
+        extraTypes.push(item.type);
+      }
     }
   }
 
@@ -32,6 +38,7 @@ export function loadNodeTypes(): LoadedNodeTypes | Error[] {
   return {
     namedTypes,
     unnamedTypes,
+    extraTypes,
     types
   };
 }
