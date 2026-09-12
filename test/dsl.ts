@@ -260,6 +260,7 @@ export function raw(tmpl: TemplateStringsArray): string {
   return tmpl.raw.join("").split(/\n[ \t]*\|?/).join("\n");
 }
 
+
 export function mustBeVariableStmt<N extends (NodeView_stmt_let | NodeView_stmt_var)["type"]>(type: N, name: NodeChecker<NodeView_destructuring["type"]>, decl: NodeChecker<NodeView_type_annotation["type"]> | null, initial: NodeChecker<NodeView_expr["type"]>) {
   return mustBeNode(type, {
     extract: node => {
@@ -283,4 +284,41 @@ export function mustBeVariableStmt<N extends (NodeView_stmt_let | NodeView_stmt_
       initial
     }
   })
+}
+
+export function mustBeMatchChildCase(condition: NodeChecker<"expr">, body: NodeChecker<"expr">) {
+  return mustBeNode("match_child_case", {
+    extract: node => {
+      const res = {
+        condition: node.childForFieldName("condition"),
+        body: node.childForFieldName("body"),
+      } as const;
+
+      expect(res.condition).not.toBeNullable();
+      expect(res.body).not.toBeNullable();
+
+      return res;
+    },
+    checker: {
+      condition,
+      body
+    }
+  });
+}
+
+export function mustBeMatchChildDefault(body: NodeChecker<"expr">) {
+  return mustBeNode("match_child_default", {
+    extract: node => {
+      const res = {
+        body: node.childForFieldName("body"),
+      } as const;
+
+      expect(res.body).not.toBeNullable();
+
+      return res;
+    },
+    checker: {
+      body
+    }
+  });
 }

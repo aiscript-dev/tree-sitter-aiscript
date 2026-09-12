@@ -3,16 +3,21 @@ import { Parser } from "web-tree-sitter";
 import {
   grammarTestOf,
   mustBeBinaryOperator,
+  mustBeBlockChild,
   mustBeBoolLiteral,
   mustBeExpr,
   mustBeIdent,
+  mustBeLiteral,
+  mustBeMatchChildCase,
+  mustBeMatchChildDefault,
   mustBeNode,
   mustBeNumericLiteral,
+  mustBeObjectLiteral,
   mustBeObjectLiteralField,
   mustBeReference,
   mustBeStmt,
   mustBeStringLiteral,
-  raw
+  raw,
 } from "./dsl.ts";
 
 await Parser.init();
@@ -531,6 +536,172 @@ test(`let message = "Hello"`, grammarTestOf(
                     mustBeStringLiteral("double_quote_string_literal", `"Hello"`)
                   ])
                 )
+            }
+          })
+        )
+      ])
+    ])
+  ])
+));
+
+test(`### { hoge: 1234 }`, grammarTestOf(
+  raw`
+  |### { hoge: 1234 }
+  `,
+  mustBeNode("source_file", null, [
+    mustBeNode("global", null, [
+      mustBeNode("global_block_child", null, [
+        mustBeNode("metadata", {
+          extract: node => {
+            const res = {
+              data: node.childForFieldName("data"),
+            } as const;
+
+            expect(res.data).not.toBeNullable();
+
+            return res;
+          },
+          checker: {
+            data:
+              mustBeLiteral(
+                mustBeObjectLiteral([
+                  mustBeObjectLiteralField(
+                    mustBeIdent("hoge"),
+                    mustBeExpr(
+                      mustBeLiteral(
+                        mustBeNumericLiteral("decimal", "1234")
+                      )
+                    )
+                  )
+                ])
+              )
+          }
+        })
+      ])
+    ])
+  ])
+));
+
+test(`eval { return 1234 }`, grammarTestOf(
+  raw`
+  |eval { return 1234 }
+  `,
+  mustBeNode("source_file", null, [
+    mustBeNode("global", null, [
+      mustBeNode("global_block_child", null, [
+        mustBeExpr(
+          mustBeNode("expr_eval", {
+            extract: node => {
+              const res = {
+                body: node.childForFieldName("body"),
+              } as const;
+
+              expect(res.body).not.toBeNullable();
+
+              return res;
+            },
+            checker: {
+              body:
+                mustBeNode("block", null, {
+                  filter: x => x.isNamed,
+                  children: [
+                    mustBeBlockChild(
+                      mustBeStmt(
+                        mustBeNode("stmt_return", {
+                          extract: node => {
+                            const res = {
+                              expr: node.childForFieldName("expr"),
+                            } as const;
+
+                            expect(res.expr).not.toBeNullable();
+
+                            return res;
+                          },
+                          checker: {
+                            expr:
+                              mustBeExpr(
+                                mustBeLiteral(
+                                  mustBeNumericLiteral("decimal", "1234")
+                                )
+                              )
+                          }
+                        })
+                      )
+                    )
+                  ]
+                })
+            }
+          })
+        )
+      ])
+    ])
+  ])
+));
+
+
+test(`match a { case 1 => b, case 2 => c, default => d }`, grammarTestOf(
+  raw`
+  |match a { case 1 => b, case 2 => c, default => d }
+  `,
+  mustBeNode("source_file", null, [
+    mustBeNode("global", null, [
+      mustBeNode("global_block_child", null, [
+        mustBeExpr(
+          mustBeNode("expr_match", {
+            extract: node => {
+              const res = {
+                target: node.childForFieldName("target"),
+                cases: node.childForFieldName("cases"),
+              } as const;
+
+              expect(res.target).not.toBeNullable();
+              expect(res.cases).not.toBeNullable();
+
+              return res;
+            },
+            checker: {
+              target: mustBeExpr(
+                mustBeReference(
+                  mustBeIdent("a")
+                )
+              ),
+              cases:
+                mustBeNode("match_cases", null, {
+                  filter: x => x.isNamed,
+                  children: [
+                    mustBeMatchChildCase(
+                      mustBeExpr(
+                        mustBeLiteral(
+                          mustBeNumericLiteral("decimal", "1")
+                        )
+                      ),
+                      mustBeExpr(
+                        mustBeReference(
+                          mustBeIdent("b")
+                        )
+                      )
+                    ),
+                    mustBeMatchChildCase(
+                      mustBeExpr(
+                        mustBeLiteral(
+                          mustBeNumericLiteral("decimal", "2")
+                        )
+                      ),
+                      mustBeExpr(
+                        mustBeReference(
+                          mustBeIdent("c")
+                        )
+                      )
+                    ),
+                    mustBeMatchChildDefault(
+                      mustBeExpr(
+                        mustBeReference(
+                          mustBeIdent("d")
+                        )
+                      )
+                    )
+                  ]
+                })
             }
           })
         )
