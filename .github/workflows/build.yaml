@@ -1,0 +1,43 @@
+# $schema: https://json.schemastore.org/github-workflow.json
+
+name: build tarball
+on:
+  workflow_call:
+    inputs:
+      do_upload:
+        type: boolean
+        default: false
+      artifact_name:
+        type: string
+        default: package-tarball
+      ref:
+        type: string
+
+env:
+  pnpm-runtime: node@24
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - if: ${{ inputs.ref == '' }}
+        uses: actions/checkout@v7
+      - if: ${{ inputs.ref != '' }}
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.ref }}
+      - name: initialize pnpm
+        uses: pnpm/setup@v2
+        with:
+          runtime: ${{ env.pnpm-runtime }}
+          install: true
+          require-lockfile: true
+          cache: true
+      - name: build tarball
+        run: |-
+          mkdir -p out/ && pnpm pack --pack-destination out/
+      - if: ${{ inputs.do_upload }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ inputs.artifact_name }}
+          path: ./out/
