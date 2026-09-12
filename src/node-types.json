@@ -426,11 +426,19 @@
           "named": true
         },
         {
+          "type": "expr_eval",
+          "named": true
+        },
+        {
           "type": "expr_function",
           "named": true
         },
         {
           "type": "expr_if",
+          "named": true
+        },
+        {
+          "type": "expr_match",
           "named": true
         },
         {
@@ -527,6 +535,32 @@
     }
   },
   {
+    "type": "expr_eval",
+    "named": true,
+    "fields": {
+      "body": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "block",
+            "named": true
+          }
+        ]
+      }
+    },
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "keyword_eval",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
     "type": "expr_function",
     "named": true,
     "fields": {
@@ -611,6 +645,42 @@
     }
   },
   {
+    "type": "expr_match",
+    "named": true,
+    "fields": {
+      "cases": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "match_cases",
+            "named": true
+          }
+        ]
+      },
+      "target": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "expr",
+            "named": true
+          }
+        ]
+      }
+    },
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "keyword_match",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
     "type": "function_params",
     "named": true,
     "fields": {},
@@ -676,6 +746,10 @@
       "types": [
         {
           "type": "expr",
+          "named": true
+        },
+        {
+          "type": "metadata",
           "named": true
         },
         {
@@ -756,6 +830,83 @@
           "named": true
         }
       ]
+    }
+  },
+  {
+    "type": "match_cases",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": false,
+      "types": [
+        {
+          "type": "match_child_case",
+          "named": true
+        },
+        {
+          "type": "match_child_default",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "match_child_case",
+    "named": true,
+    "fields": {
+      "body": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "expr",
+            "named": true
+          }
+        ]
+      },
+      "condition": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "expr",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "type": "match_child_default",
+    "named": true,
+    "fields": {
+      "body": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "expr",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "type": "metadata",
+    "named": true,
+    "fields": {
+      "data": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "literal",
+            "named": true
+          }
+        ]
+      }
     }
   },
   {
@@ -1647,6 +1798,10 @@
     "named": false
   },
   {
+    "type": "###",
+    "named": false
+  },
+  {
     "type": "%",
     "named": false
   },
@@ -1711,6 +1866,10 @@
     "named": false
   },
   {
+    "type": "=>",
+    "named": false
+  },
+  {
     "type": ">",
     "named": false
   },
@@ -1751,6 +1910,10 @@
     "named": true
   },
   {
+    "type": "case",
+    "named": false
+  },
+  {
     "type": "comment",
     "named": true,
     "extra": true
@@ -1758,6 +1921,10 @@
   {
     "type": "decimal",
     "named": true
+  },
+  {
+    "type": "default",
+    "named": false
   },
   {
     "type": "double_quote_string_text",
@@ -1796,6 +1963,10 @@
     "named": true
   },
   {
+    "type": "keyword_eval",
+    "named": true
+  },
+  {
     "type": "keyword_for",
     "named": true
   },
@@ -1809,6 +1980,10 @@
   },
   {
     "type": "keyword_loop",
+    "named": true
+  },
+  {
+    "type": "keyword_match",
     "named": true
   },
   {
