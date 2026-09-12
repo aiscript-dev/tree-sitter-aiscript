@@ -78,6 +78,7 @@ export default grammar({
     ),
     global_block_child: $ => choice(
       $.namespace,
+      $.metadata,
       $.stmt,
       $.expr
     ),
@@ -87,6 +88,9 @@ export default grammar({
     ),
     namespace: $ => seq(
       "::", field("name", $.ident), field("body", $.block)
+    ),
+    metadata: $ => seq(
+      "###", field("data", $.literal)
     ),
     _block_delimiter: $ => choice(
       ";",
@@ -201,6 +205,8 @@ export default grammar({
       $.expr_if,
       $.parentheses,
       $.expr_function,
+      $.expr_eval,
+      $.expr_match,
       $.call,
       $.reference,
       $.literal,
@@ -252,6 +258,38 @@ export default grammar({
         field("body", $.expr),
       ),
     )),
+    expr_eval: $ => seq(
+      $.keyword_eval,
+      field("body", $.block),
+    ),
+    expr_match: $ => seq(
+      $.keyword_match,
+      field("target", $.expr),
+      field("cases", $.match_cases)
+    ),
+    match_cases: $ => seq(
+      "{",
+      optional($._field_delimiter),
+      optional(seq(
+        $._match_child,
+        repeat(seq(
+          $._field_delimiter,
+          $._match_child,
+        )),
+      )),
+      optional($._field_delimiter),
+      "}"
+    ),
+    _match_child: $ => choice(
+      $.match_child_case,
+      $.match_child_default
+    ),
+    match_child_case: $ => seq(
+      "case", field("condition", $.expr), "=>", field("body", $.expr)
+    ),
+    match_child_default: $ => seq(
+      "default", "=>", field("body", $.expr)
+    ),
     call: $ => seq(
       field("target", choice(
         $.reference,
