@@ -34,7 +34,11 @@
   (keyword_if)
   (keyword_elif)
   (keyword_else)
+  (keyword_eval)
+  (keyword_match)
   (symbol_print)
+  "case"
+  "default"
 ] @keyword
 
 [
@@ -52,6 +56,8 @@
   "!="
   "&&"
   "||"
+  "=>"
+  "###"
 ] @keyword.operator
 
 [
@@ -68,6 +74,12 @@
 (expr_function) @definition.function
 
 (expr_function "@" @keyword)
+
+(call
+  target: (reference [
+    (_ (ident) @function.method)
+    (ident) @function.method
+  ]))
 
 (function_params_field
   name: (_) @variable.parameter)
