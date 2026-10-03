@@ -12,6 +12,8 @@
 
   The package tarball contains only the precompiled WASM, it not conains native bindings.
 
+- [Document (日本語)](./docs/index.md)
+
 Example(NodeJS):
 ```ts
 import { fileURLToPath } from "node:url";
