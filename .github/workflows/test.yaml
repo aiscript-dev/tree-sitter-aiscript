@@ -1,6 +1,6 @@
 # $schema: https://json.schemastore.org/github-workflow.json
 
-name: Run test
+name: test
 on:
   workflow_dispatch:
   push:
