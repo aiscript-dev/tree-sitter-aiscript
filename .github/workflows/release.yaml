@@ -1,6 +1,6 @@
 # $schema: https://json.schemastore.org/github-workflow.json
 
-name: add package to release
+name: release
 on:
   workflow_dispatch:
   release:
